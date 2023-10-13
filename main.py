@@ -32,8 +32,9 @@ score = 0
 
 color_body = (255, 150, 255)
 color_snake = (255, 51, 255)
-snake_rec = pygame.Rect(x, y, 20, 20)
-body = [snake_rec]
+head_snake = pygame.Rect(x, y, 20, 20)
+body = [head_snake]
+
 
 def draw_grid():
     block_size = 20
@@ -80,11 +81,17 @@ def show_score():
     pygame.display.update()
 
 
-def update_body(big_body):
-    # shift
+def update_body_first_iteration(big_body, body_x, body_y):
+    # WORK AROUND first iteration
+    big_body.append(pygame.Rect(body_x, body_y, 20, 20))
+
+
+def update_body(big_body, body_x, body_y):
+    if len(big_body) == 1:
+        update_body_first_iteration(big_body, body_x, body_y)
     new_body = big_body.copy()
     new_body.reverse()
-    for i in range(0, len(new_body) - 1):
+    for i in range(0, len(new_body) - 1):  # SHIFT
         new_body[i].y = new_body[i + 1].y
         new_body[i].x = new_body[i + 1].x
     new_body.pop(-1)  # pop the HEAD
@@ -127,25 +134,26 @@ while running:
             if event.key == pygame.K_UP:
                 pos_x = 0
                 pos_y = -20
-    if snake_rec.colliderect(food_pos):  # FOOD eaten
-        place_random_food()
-        score = score + 10
-        # Coordinates of last rect of the body to be appended
-        body_rec = pygame.Rect(snake_rec.x, snake_rec.y, 20, 20)
-        body.append(pygame.draw.rect(screen, color_body, body_rec))
+        if head_snake.colliderect(food_pos):  # FOOD eaten
+            place_random_food()
+            score = score + 10
+            # Coordinates of last rect of the body to be appended
+            body_rec = pygame.Rect(body_x, body_y, 20, 20)
+            body.append(pygame.draw.rect(screen, color_body, body_rec))
 
     # Update snake
-    snake_rec.x = x
-    snake_rec.y = y
+    head_snake.x = x
+    head_snake.y = y
 
     # Update Body
-    updated_body = update_body(body)
+    updated_body = update_body(body, body_x, body_y)
 
     # DRAW logic
     pygame.display.flip()
     draw_grid()
     draw_snake_food()
-    pygame.draw.rect(screen, color_snake, snake_rec)
+    # draw head AFTER the body because it overlaps it
     draw_body(updated_body)
+    pygame.draw.rect(screen, color_snake, head_snake)
 
     clock.tick(10)
