@@ -11,7 +11,6 @@ pygame.display.set_caption('Snake Game')
 running = True
 x = 300
 y = 300
-ti = time.time()
 pos_x = 20
 pos_y = 0
 clock = pygame.time.Clock()
@@ -21,7 +20,9 @@ window_width = 600
 window_height = 600
 col1 = (204, 255, 255)
 col2 = (204, 229, 255)
-angle = 0
+body_x = x
+body_y = y
+
 game_over_font = pygame.font.Font(None, 50)
 game_over_text = game_over_font.render("Game Over", True, (0, 0, 0))
 game_over_rect = game_over_text.get_rect()
@@ -81,9 +82,9 @@ def show_score():
     pygame.display.update()
 
 
-def update_body_first_iteration(big_body, body_x, body_y):
+def update_body_first_iteration(big_body, body1_x, body1_y):
     # WORK AROUND first iteration
-    big_body.append(pygame.Rect(body_x, body_y, 20, 20))
+    big_body.append(pygame.Rect(body1_x, body1_y, 20, 20))
 
 
 def update_body(big_body, body_x, body_y):
@@ -94,17 +95,11 @@ def update_body(big_body, body_x, body_y):
     for i in range(0, len(new_body) - 1):  # SHIFT
         new_body[i].y = new_body[i + 1].y
         new_body[i].x = new_body[i + 1].x
-    new_body.pop(-1)  # pop the HEAD
+    new_body.pop(-1)  # pop the head body element
     new_body.reverse()
     return new_body
 
-
-def game_over():
-    return x >= 581 or x <= -1 or y <= -1 or y >= 581
-
-
 while running:
-
     event = pygame.event.poll()
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
@@ -113,33 +108,30 @@ while running:
             running = False
     food_pos = draw_snake_food()
 
-    if game_over():
-        show_score()
-    else:
-        body_x = x
-        body_y = y
-        x += pos_x
-        y += pos_y
+    body_x = x
+    body_y = y
+    x += pos_x
+    y += pos_y
 
-        if event.type == pygame.KEYDOWN: # Directions
-            if event.key == pygame.K_RIGHT:
-                pos_x = 20
-                pos_y = 0
-            if event.key == pygame.K_LEFT:
-                pos_x = -20
-                pos_y = 0
-            if event.key == pygame.K_DOWN:
-                pos_x = 0
-                pos_y = 20
-            if event.key == pygame.K_UP:
-                pos_x = 0
-                pos_y = -20
-        if head_snake.colliderect(food_pos):  # FOOD eaten
-            place_random_food()
-            score = score + 10
-            # Coordinates of last rect of the body to be appended
-            body_rec = pygame.Rect(body_x, body_y, 20, 20)
-            body.append(pygame.draw.rect(screen, color_body, body_rec))
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_RIGHT:
+            pos_x = 20
+            pos_y = 0
+        if event.key == pygame.K_LEFT:
+            pos_x = -20
+            pos_y = 0
+        if event.key == pygame.K_DOWN:
+            pos_x = 0
+            pos_y = 20
+        if event.key == pygame.K_UP:
+            pos_x = 0
+            pos_y = -20
+    if head_snake.colliderect(food_pos):  # FOOD eaten
+        place_random_food()
+        score = score + 10
+        # Coordinates of last rect of the body to be appended
+        body_rec = pygame.Rect(body_x, body_y, 20, 20)
+        body.append(pygame.draw.rect(screen, color_body, body_rec))
 
     # Update snake
     head_snake.x = x
@@ -147,6 +139,25 @@ while running:
 
     # Update Body
     updated_body = update_body(body, body_x, body_y)
+
+
+    def body_touch():
+        for i in range(1, len(updated_body)):
+            if head_snake.colliderect(updated_body[i]):
+                print("hi")
+                return True
+        return False
+
+
+    def game_over():
+        # head and body as arguments to check
+        check_1 = x >= 581 or x <= -1 or y <= -1 or y >= 581
+        check_2 = body_touch()
+        return check_1 or check_2
+
+    if game_over():
+        show_score()
+        running = False
 
     # DRAW logic
     pygame.display.flip()
